@@ -12,7 +12,7 @@ private:
         T key;
         Node* next;
         Node* prev;
-        
+
         Node(T el) {key = el; left = NULL; right = NULL; parent = NULL; height = 0; next = NULL; prev = NULL;};
     };
     Node* root;
@@ -30,7 +30,7 @@ public:
     
     void preorderTravelsar(Node* x) { // корень: левая ветвь, правая ветвь
         if (x != NULL) {
-            //std::cout << x->key << " " << "height: "<< x->height << " ";
+            std::cout << x->key << " ";
             if (x->left != NULL) {
                 std::cout << "l: " << x->left->key << " ";
             }

@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra
 
 SRC = main.cpp 
-HEADERS = binary heap.h Dynamic Array.h Graph.h Header.h set.h tests.h
+HEADERS = binary heap.h Dynamic Array.h Graph.h Header.h set.h tests.h ui.h
 OBJS = $(SRC:.cpp=.o)
 EXEC = main
 
