@@ -1,6 +1,7 @@
 #ifndef Graph_h
 #define Graph_h
 #include <vector>
+#include "Dynamic Array.h"
 template<typename T>
 class Tree{
 private:
@@ -17,9 +18,37 @@ private:
     };
     Node* root;
     Node* last;
+
+    void clear() {
+            if (root == NULL) return;
+            DynamicArray<Node*>* dim = new DynamicArray<Node*>;
+            Node* lastVisited = NULL;
+            Node* node = root;
+            
+            while (dim->getLength() != 0 || node != NULL) {
+                if (node != NULL) {
+                    dim->append(node);
+                    node = node->left;
+                } else {
+                    Node* peekNode = dim->getLast();
+                    if (peekNode->right != NULL && lastVisited != peekNode->right) {
+                        node = peekNode->right;
+                    } else {
+                        lastVisited = dim->getLast();
+                        dim->deLete(dim->getLength());
+                        delete lastVisited;
+                    }
+                }
+            }
+            root = NULL;
+            last = NULL;
+            
+        }
+
 public:
-    Tree() {root = new Node(NULL);};
-    
+    Tree() {root = new Node(NULL);}
+    ~Tree() { clear(root); }
+
     void copy(Node* x) {
         if (x != NULL) {
             insert(x->key);
@@ -28,6 +57,7 @@ public:
         }
     }
     
+    // было
     void preorderTravelsar(Node* x) { // корень: левая ветвь, правая ветвь
         if (x != NULL) {
             std::cout << x->key << " ";
@@ -43,6 +73,65 @@ public:
         }
     }
     
+
+    // стало
+    // корень-лево-право
+    void KLP() {
+        if (root == NULL) return;
+        DynamicArray<Node*>* dim = new DynamicArray<Node*>;
+        dim->append(root);
+        while (dim->getLength() != 0) {
+            Node* node = dim->getLast();
+            dim->deLete(dim->getLength());
+            std::cout << node->key << " ";
+            if (node->right) dim->append(node->right);
+            if (node->left) dim->append(node->left);
+        }
+        std::cout << "\n";
+    }
+
+    // лево-корень-право
+    void LKP() {
+        DynamicArray<Node*>* dim = new DynamicArray<Node*>;
+        Node* node = root;
+        while (node != NULL || dim->getLength() != 0) {
+            while (node != NULL) {
+                dim->append(node);
+                node = node->left;
+            }
+            node = dim->getLast();
+            dim->deLete(dim->getLength());
+            std::cout << node->key << " ";
+            node = node->right;
+        }
+        std::cout << "\n";
+    }
+
+    // лево-право-корень
+    void LPK() {
+        if (root == NULL) return;
+        DynamicArray<Node*>* dim = new DynamicArray<Node*>;
+        Node* lastVisited = NULL;
+        Node* node = root;
+        
+        while (dim->getLength() != 0 || node != NULL) {
+            if (node != NULL) {
+                dim->append(node);
+                node = node->left;
+            } else {
+                Node* peekNode = dim->getLast();
+                if (peekNode->right != NULL && lastVisited != peekNode->right) {
+                    node = peekNode->right;
+                } else {
+                    std::cout << peekNode->key << " ";
+                    lastVisited = dim->getLast();
+                    dim->deLete(dim->getLength());
+                }
+            }
+        }
+        std::cout << "\n";
+    }
+
     void firmware(Node* x) { // корень: левая ветвь, правая ветвь
 
     }
@@ -60,22 +149,21 @@ public:
                     cur = cur->right;
                 } else {
 
-                    std::cout << "Conclude\n";
                     return cur;
                 }
             } else if (k < cur->key) {
                 if (cur->left != NULL) {
                     cur = cur->left;
                 } else {
-                    std::cout << "Conclude\n";
+    
                     return cur;
                 }
             } else {
-                std::cout << "Conclude\n";
+                
                 return cur;
             }
         }
-        std::cout << "Conclude\n";
+        
         return cur;
     }
     
@@ -117,50 +205,84 @@ public:
     void deleteElement(T val) {
         Tree* t = this;
         Node* cur = t->search(val);
-        Node* par = cur->parent;
-        if (cur->prev == NULL) {
-            cur->next->prev = NULL;
-        } else  if (cur->next == NULL) {
-            last = cur->prev;
-        } else {
-            cur->prev->next = cur->next; // проверить крайние случаи удаление сначала и с конца
-        }
-        
-        if (cur->left == NULL && cur->right == NULL) {
-            if (par->left == cur) {
-                par->left = NULL;
-            }
-            if (par->right == cur) {
-                par->right = NULL;
-            }
-        } else if (cur->left == NULL || cur->right == NULL) {
-            if (cur->left == NULL) {
-                if (par->left == cur) {
-                    par->left = cur->right;
+        if (cur->parent == NULL) {
+            if (cur->left == NULL && cur->right == NULL) {
+                delete cur;
+            } else if (cur->left == NULL || cur->right == NULL) {
+                if (cur->left == NULL) {
+                    root = cur->right;
+                    root->parent = NULL;
                 } else {
-                    par->right = cur->right;
-                    cur->right->parent = par;
+                    root = cur->left;
+                    root->parent = NULL;
                 }
             } else {
-                if (par->left == cur) {
-                    par->left = cur->left;
+                Node* next = cur->left;
+                cur->key = next->key;
+                if (next->parent->left == next) {
+                    next->parent->left = next->right;
+                    if (next->right != NULL) {
+                        next->right->parent = next->parent;
+                    } else {
+                        next->right = root->right;
+                    }
                 } else {
-                    par->right = cur->left;
-                    par->left->parent = par;
+                    next->parent->right = next->right;
+                    if (next->right != NULL) {
+                        next->right->parent = next->parent;
+                    } else {
+                        next->left = root->left;
+                    }
                 }
+                root = next;
+                next->parent = NULL;
             }
         } else {
-            Node* next = cur->left;
-            cur->key = next->key;
-            if (next->parent->left == next) {
-                next->parent->left = next->right;
-                if (next->right != NULL) {
-                    next->right->parent = next->parent;
+            Node* par = cur->parent;
+            if (cur->prev == NULL) {
+                cur->next->prev = NULL;
+            } else  if (cur->next == NULL) {
+                last = cur->prev;
+            } else {
+                cur->prev->next = cur->next; // проверить крайние случаи удаление сначала и с конца
+            }
+            
+            if (cur->left == NULL && cur->right == NULL) {
+                if (par->left == cur) {
+                    par->left = NULL;
+                }
+                if (par->right == cur) {
+                    par->right = NULL;
+                }
+            } else if (cur->left == NULL || cur->right == NULL) {
+                if (cur->left == NULL) {
+                    if (par->left == cur) {
+                        par->left = cur->right;
+                    } else {
+                        par->right = cur->right;
+                        cur->right->parent = par;
+                    }
+                } else {
+                    if (par->left == cur) {
+                        par->left = cur->left;
+                    } else {
+                        par->right = cur->left;
+                        par->left->parent = par;
+                    }
                 }
             } else {
-                next->parent->right = next->right;
-                if (next->right != NULL) {
-                    next->right->parent = next->parent;
+                Node* next = cur->left;
+                cur->key = next->key;
+                if (next->parent->left == next) {
+                    next->parent->left = next->right;
+                    if (next->right != NULL) {
+                        next->right->parent = next->parent;
+                    }
+                } else {
+                    next->parent->right = next->right;
+                    if (next->right != NULL) {
+                        next->right->parent = next->parent;
+                    }
                 }
             }
         }

@@ -7,74 +7,87 @@
 #include <iostream>
 #include <cassert>
 
-void testInsertAndSearch() {
-    Tree<int> tree;
+void ObhodAll(Tree<int>* tr) {
+
+    tr->insert(2);
+    tr->insert(1);
+    tr->insert(3);
+    tr->insert(4);
+
+    std::vector<int> KLP_res = {2, 1, 3, 4}; 
+    std::vector<int> LKP_res = {1, 2, 3, 4}; 
+    std::vector<int> LPK_res = {1, 4, 3, 2};
     
-    // Вставка элементов
-    int values[] = {5, 3, 7, 2, 4, 6, 8};
-    for (int value : values) {
-        tree.insert(value);
-    }
-    
-    // Поиск элементов
-    for (int value : values) {
-        assert(tree.search(value) != NULL);
-    }
-    
-    // Поиск отсутствующего элемента
-    assert(tree.search(10) == NULL);
-    
-    std::cout << "Тесты на вставку и поиск пройдены.\n";
+    assert(tr->copyAsString() == KLP_res);
+
+    tr->LKP();
+    tr->KLP();
+    tr->LPK();
 }
 
-void testDelete() {
-    Tree<int> tree;
-    
-    // Вставка элементов
-    int values[] = {5, 3, 7, 2, 4, 6, 8};
-    for (int value : values) {
-        tree.insert(value);
-    }
-    
-    // Удаление элементов
-    tree.deleteElement(2);  // Удаление листового узла
-    tree.deleteElement(7);  // Удаление узла с двумя потомками
-    
-    // Проверка отсутствия удаленных элементов
-    assert(tree.search(2) == NULL);
-    assert(tree.search(7) == NULL);
-    
-    // Проверка наличия других элементов
-    for (int value : values) {
-        if (value != 2 && value != 7) {
-            assert(tree.search(value) != NULL);
-        }
-    }
-    
-    std::cout << "Тесты на удаление пройдены.\n";
+void DeleRoot(Tree<int>* tr) {
+    tr->deleteElement(2);
+
+   
+    std::vector<int> KLP_res = {3, 1, 4}; 
+    std::vector<int> LKP_res = {1, 3, 4};
+    std::vector<int> LPK_res = {1, 4, 3};
+
+    assert(tr->copyAsString() == KLP_res);
+    tr->LKP();
+    tr->KLP();
+    tr->LPK();
 }
 
-void testBalance() {
-    Tree<int> tree;
-    
-    // Вставка элементов
-    int values[] = {5, 3, 7, 2, 4, 6, 8};
-    for (int value : values) {
-        tree.insert(value);
-    }
-    
-    // Балансировка дерева
-    tree.Balance(tree.rooT());
-    
-    //assert(tree.isBalanced());
-    
-    std::cout << "Тесты на балансировку пройдены.\n";
+void DeleLeaf(Tree<int>* tr) {
+    tr->deleteElement(1);
+
+    std::vector<int> KLP_res = {3, 4};
+    std::vector<int> LKP_res = {3, 4};
+    std::vector<int> LPK_res = {4, 3};
+
+    assert(tr->copyAsString() == KLP_res);
+    tr->LKP();
+    tr->KLP();
+    tr->LPK();
 }
+
+void DelNodeWith1Child(Tree<int>* tr) {
+    tr->deleteElement(3);
+
+    
+    std::vector<int> KLP_res = {4};
+    std::vector<int> LKP_res = {4};
+    std::vector<int> LPK_res = {4};
+
+    assert(tr->copyAsString() == KLP_res);
+    tr->LKP(); 
+    tr->KLP();
+    tr->LPK(); 
+}
+
+void Clear_test(Tree<int>* tr) {
+    delete tr;
+
+    std::vector<int> expectedEmpty = {};
+
+    assert(tr->copyAsString() == expectedEmpty);
+    tr->LKP(); 
+    tr->KLP(); 
+    tr->LPK(); 
+}
+
 
 void runTests() {
-    testInsertAndSearch();
-    testDelete();
-    testBalance();
+    Tree<int>* tr = new Tree<int>;
+
+    ObhodAll(tr);
+    DeleRoot(tr);
+    DeleLeaf(tr);
+    DelNodeWith1Child(tr);
+    Clear_test(tr);
+    delete tr;
+
 }
 
 

@@ -1,6 +1,9 @@
 #ifndef Dynamic_Array_h
 #define Dynamic_Array_h
 
+#include <cstring>
+
+
 template<typename T>
 
 class DynamicArray {
