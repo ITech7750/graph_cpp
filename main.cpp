@@ -1,15 +1,17 @@
 #include <iostream>
+#include <vector>
 #include "Graph.h"  
 #include "tests.h"  
 #include "ui.h"
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[]) {
     Tree<int>* tree = new Tree<int>;
-    std::vector<int> tr;
+    std::vector<int> traversalResult;
     Tree<int>* ntree = new Tree<int>;
+    SimpleTreePrinter<int> printer;
     int operation = 1;
     int value;
-    
+
     while (operation) {
         printMenu();
         std::cin >> operation;
@@ -26,28 +28,35 @@ int main(int argc, const char * argv[]) {
                 break;
             case 3:
                 std::cout << "Дерево сбалансировано\n";
-                tree->B(tree->rooT());
+                tree->B(tree->getRoot());
                 break;
             case 4:
                 std::cout << "Применение функции 'where'\n";
-                tree->where(where_func, ntree, tree->rooT());
+                tree->where(where_func, ntree, tree->getRoot());
                 break;
             case 5:
                 std::cout << "Создание подграфа\nВведите число: ";
                 std::cin >> value;
-                tree->budding(value);
+                ntree = tree->budding(value);
                 break;
             case 6:
                 std::cout << "Копирование в строку\n";
-                tree->copyStr(tree->rooT(), tr);
+                traversalResult.clear();
+                tree->copyStr(tree->getRoot(), traversalResult);
+                std::cout << "Копия дерева: ";
+                for (int val : traversalResult) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
                 break;
             case 7:
                 std::cout << "Отображение дерева\n";
-                tree->preorderTravelsar(tree->rooT());
+                tree->preorderTraversal(tree->getRoot(), printer);
+                std::cout << std::endl;
                 break;
             case 8:
                 std::cout << "Запуск тестов...\n";
-                runTests();
+                //runTests();
                 break;
             case 0:
                 std::cout << "Выход из программы\n";
@@ -57,9 +66,9 @@ int main(int argc, const char * argv[]) {
                 break;
         }
     }
-    
+
     delete tree; // Освобождаем память, выделенную для дерева
     delete ntree; // Освобождаем память, выделенную для второго дерева
-    
+
     return 0;
 }

@@ -2,8 +2,23 @@
 #define Graph_h
 #include <vector>
 #include "Dynamic Array.h"
+
 template<typename T>
-class Tree{
+class TreePrinter {
+public:
+    virtual void printNode(const T& key) const = 0;
+};
+
+template<typename T>
+class SimpleTreePrinter : public TreePrinter<T> {
+public:
+    void printNode(const T& key) const override {
+        std::cout << key << " ";
+    }
+};
+
+template<typename T>
+class Tree {
 private:
     struct Node {
         Node* left;
@@ -14,84 +29,159 @@ private:
         Node* next;
         Node* prev;
 
-        Node(T el) {key = el; left = NULL; right = NULL; parent = NULL; height = 0; next = NULL; prev = NULL;};
+        Node(T el) : key(el), left(nullptr), right(nullptr), parent(nullptr), height(0), next(nullptr), prev(nullptr) {}
     };
     Node* root;
     Node* last;
 
-    void clear() {
-            if (root == NULL) return;
-            DynamicArray<Node*>* dim = new DynamicArray<Node*>;
-            Node* lastVisited = NULL;
-            Node* node = root;
-            
-            while (dim->getLength() != 0 || node != NULL) {
-                if (node != NULL) {
-                    dim->append(node);
-                    node = node->left;
-                } else {
-                    Node* peekNode = dim->getLast();
-                    if (peekNode->right != NULL && lastVisited != peekNode->right) {
-                        node = peekNode->right;
+    void clear(Node* node) {
+        if (node == nullptr) return;
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
+    void copy(Node* x) {
+        if (x != nullptr) {
+            insert(x->key);
+            copy(x->left);
+            copy(x->right);
+        }
+    }
+
+    void copyStr(Node* x, std::vector<T>& q) const {
+        if (x != nullptr) {
+            q.push_back(x->key);
+            copyStr(x->left, q);
+            copyStr(x->right, q);
+        }
+    }
+
+public:
+    Tree() : root(nullptr), last(nullptr) {}
+    ~Tree() { clear(root); }
+
+    Node* getRoot() const { return root; }
+
+    void insert(T val) {
+        if (root == nullptr) {
+            root = new Node(val);
+            last = root;
+        } else {
+            Node* newNode = new Node(val);
+            Node* cur = root;
+            while (cur != nullptr) {
+                if (newNode->key > cur->key) {
+                    if (cur->right != nullptr) {
+                        cur = cur->right;
                     } else {
-                        lastVisited = dim->getLast();
-                        dim->deLete(dim->getLength());
-                        delete lastVisited;
+                        newNode->parent = cur;
+                        cur->right = newNode;
+                        last->next = newNode;
+                        newNode->prev = last;
+                        last = newNode;
+                        break;
+                    }
+                } else if (newNode->key < cur->key) {
+                    if (cur->left != nullptr) {
+                        cur = cur->left;
+                    } else {
+                        newNode->parent = cur;
+                        cur->left = newNode;
+                        last->next = newNode;
+                        newNode->prev = last;
+                        last = newNode;
+                        break;
                     }
                 }
             }
-            root = NULL;
-            last = NULL;
-            
-        }
-
-public:
-    Tree() {root = new Node(NULL);}
-    ~Tree() { clear(root); }
-
-    void copy(Node* x) {
-        if (x != NULL) {
-            insert(x->key);
-            copy(x->right);
-            copy(x->left);
         }
     }
-    
-    // было
-    void preorderTravelsar(Node* x) { // корень: левая ветвь, правая ветвь
-        if (x != NULL) {
-            std::cout << x->key << " ";
-            if (x->left != NULL) {
-                std::cout << "l: " << x->left->key << " ";
+
+    void deleteElement(T val) {
+        Node* node = search(val);
+        if (node == nullptr) return;
+
+        if (node->left == nullptr && node->right == nullptr) {
+            if (node->parent == nullptr) {
+                root = nullptr;
+            } else {
+                if (node->parent->left == node) {
+                    node->parent->left = nullptr;
+                } else {
+                    node->parent->right = nullptr;
+                }
             }
-            if (x->right != NULL) {
-                std::cout << "r: " << x->right->key << " ";
+            delete node;
+        } else if (node->left == nullptr || node->right == nullptr) {
+            Node* child = (node->left != nullptr) ? node->left : node->right;
+            if (node->parent == nullptr) {
+                root = child;
+            } else {
+                if (node->parent->left == node) {
+                    node->parent->left = child;
+                } else {
+                    node->parent->right = child;
+                }
+                child->parent = node->parent;
             }
-            std::cout << "\n";
-            preorderTravelsar(x->right);
-            preorderTravelsar(x->left);
+            delete node;
+        } else {
+            Node* successor = node->right;
+            while (successor->left != nullptr) {
+                successor = successor->left;
+            }
+            node->key = successor->key;
+            if (successor->parent->left == successor) {
+                successor->parent->left = successor->right;
+            } else {
+                successor->parent->right = successor->right;
+            }
+            if (successor->right != nullptr) {
+                successor->right->parent = successor->parent;
+            }
+            delete successor;
         }
     }
-    
 
-    // стало
-    // корень-лево-право
-    void KLP() {
+    Node* search(T key) const {
+        Node* cur = root;
+        while (cur != nullptr) {
+            if (key > cur->key) {
+                cur = cur->right;
+            } else if (key < cur->key) {
+                cur = cur->left;
+            } else {
+                return cur;
+            }
+        }
+        return nullptr;
+    }
+
+    void preorderTraversal(Node* x, const TreePrinter<T>& printer) const {
+        if (x != nullptr) {
+            printer.printNode(x->key);
+            preorderTraversal(x->left, printer);
+            preorderTraversal(x->right, printer);
+        }
+    }
+
+    // Pre-order traversal (root-left-right)
+    void KLP(std::vector<T>& result) {
         if (root == NULL) return;
         DynamicArray<Node*>* dim = new DynamicArray<Node*>;
         dim->append(root);
         while (dim->getLength() != 0) {
             Node* node = dim->getLast();
             dim->deLete(dim->getLength());
-            std::cout << node->key << " ";
+            result.push_back(node->key);
             if (node->right) dim->append(node->right);
             if (node->left) dim->append(node->left);
         }
-        std::cout << "\n";
     }
 
-    // лево-корень-право
-    void LKP() {
+    // In-order traversal (left-root-right)
+    void LKP(std::vector<T>& result) {
         DynamicArray<Node*>* dim = new DynamicArray<Node*>;
         Node* node = root;
         while (node != NULL || dim->getLength() != 0) {
@@ -101,14 +191,13 @@ public:
             }
             node = dim->getLast();
             dim->deLete(dim->getLength());
-            std::cout << node->key << " ";
+            result.push_back(node->key);
             node = node->right;
         }
-        std::cout << "\n";
     }
 
-    // лево-право-корень
-    void LPK() {
+    // Post-order traversal (left-right-root)
+    void LPK(std::vector<T>& result) {
         if (root == NULL) return;
         DynamicArray<Node*>* dim = new DynamicArray<Node*>;
         Node* lastVisited = NULL;
@@ -123,241 +212,17 @@ public:
                 if (peekNode->right != NULL && lastVisited != peekNode->right) {
                     node = peekNode->right;
                 } else {
-                    std::cout << peekNode->key << " ";
+                    result.push_back(peekNode->key);
                     lastVisited = dim->getLast();
                     dim->deLete(dim->getLength());
                 }
             }
         }
-        std::cout << "\n";
     }
 
-    void firmware(Node* x) { // корень: левая ветвь, правая ветвь
 
-    }
-    
-    Node* rooT() {
-        return root;
-    }
-    
-    Node* search(T k) {
-        Node* cur = new Node(k);
-        cur = root;
-        while (cur != NULL) {
-            if (k > cur->key) {
-                if (cur->right != NULL) {
-                    cur = cur->right;
-                } else {
-
-                    return cur;
-                }
-            } else if (k < cur->key) {
-                if (cur->left != NULL) {
-                    cur = cur->left;
-                } else {
-    
-                    return cur;
-                }
-            } else {
-                
-                return cur;
-            }
-        }
-        
-        return cur;
-    }
-    
-    void insert(T val) {
-        if (root->key == NULL) {
-            root->key = val;
-            last = root;
-        } else {
-            Node* neW = new Node(val);
-            Node* cur = root;
-            while (cur != NULL) {
-                if (neW->key > cur->key) {
-                    if (cur->right != NULL) {
-                        cur = cur->right;
-                    } else {
-                        neW->parent = cur;
-                        cur->right = neW;
-                        last->next = neW;
-                        neW->prev = last;
-                        last = neW;
-                        break;
-                    }
-                } else if (neW->key < cur->key) {
-                    if (cur->left != NULL) {
-                        cur = cur->left;
-                    } else {
-                        neW->parent = cur;
-                        cur->left = neW;
-                        last->next = neW;
-                        neW->prev = last;
-                        last = neW;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    
-    void deleteElement(T val) {
-        Tree* t = this;
-        Node* cur = t->search(val);
-        if (cur->parent == NULL) {
-            if (cur->left == NULL && cur->right == NULL) {
-                delete cur;
-            } else if (cur->left == NULL || cur->right == NULL) {
-                if (cur->left == NULL) {
-                    root = cur->right;
-                    root->parent = NULL;
-                } else {
-                    root = cur->left;
-                    root->parent = NULL;
-                }
-            } else {
-                Node* next = cur->left;
-                cur->key = next->key;
-                if (next->parent->left == next) {
-                    next->parent->left = next->right;
-                    if (next->right != NULL) {
-                        next->right->parent = next->parent;
-                    } else {
-                        next->right = root->right;
-                    }
-                } else {
-                    next->parent->right = next->right;
-                    if (next->right != NULL) {
-                        next->right->parent = next->parent;
-                    } else {
-                        next->left = root->left;
-                    }
-                }
-                root = next;
-                next->parent = NULL;
-            }
-        } else {
-            Node* par = cur->parent;
-            if (cur->prev == NULL) {
-                cur->next->prev = NULL;
-            } else  if (cur->next == NULL) {
-                last = cur->prev;
-            } else {
-                cur->prev->next = cur->next; // проверить крайние случаи удаление сначала и с конца
-            }
-            
-            if (cur->left == NULL && cur->right == NULL) {
-                if (par->left == cur) {
-                    par->left = NULL;
-                }
-                if (par->right == cur) {
-                    par->right = NULL;
-                }
-            } else if (cur->left == NULL || cur->right == NULL) {
-                if (cur->left == NULL) {
-                    if (par->left == cur) {
-                        par->left = cur->right;
-                    } else {
-                        par->right = cur->right;
-                        cur->right->parent = par;
-                    }
-                } else {
-                    if (par->left == cur) {
-                        par->left = cur->left;
-                    } else {
-                        par->right = cur->left;
-                        par->left->parent = par;
-                    }
-                }
-            } else {
-                Node* next = cur->left;
-                cur->key = next->key;
-                if (next->parent->left == next) {
-                    next->parent->left = next->right;
-                    if (next->right != NULL) {
-                        next->right->parent = next->parent;
-                    }
-                } else {
-                    next->parent->right = next->right;
-                    if (next->right != NULL) {
-                        next->right->parent = next->parent;
-                    }
-                }
-            }
-        }
-    }
-    
-    int bfactor(Node* p)
-    {
-        return height(p->right) - height(p->left);
-    }
-    
-    unsigned char height(Node*p) {
-        return (p!=NULL)?p->height:0;
-    }
-    
-    void fixheight(Node* p)
-    {
-        int hl = height(p->left);
-        int hr = height(p->right);
-        p->height = (hl>hr?hl:hr)+1; // тернарный оператор
-    }
-    
-    Node* rotableLeft(Node* q) {
-        Node* p = q->right;
-        if (p != NULL) {
-            q->right = p->left;
-            p->left = q;
-            fixheight(q);
-            fixheight(p);
-            return p;
-        }
-        return q;
-    }
-    
-    Node* rotableRight(Node* p) {
-        Node* q = p->left;
-        if (q != NULL) {
-            p->left = q->right;
-            q->right = p;
-            fixheight(p);
-            fixheight(q);
-            return q;
-        }
-        return p;
-    }
-    
-    Node* balance(Node* q) {
-        fixheight(q);
-        if (bfactor(q) == 3) {
-            if (bfactor(q->right) < 0) {
-                q->right = rotableRight(q->right);
-            }
-            return rotableLeft(q);
-        }
-        if(bfactor(q) == -3) {
-            if(bfactor(q->left) > 0) {
-                q->left = rotableLeft(q->left);
-            }
-            return rotableRight(q);
-        }
-        return q;
-    }
-    
-    
-    
-    void Balance(Node* x) { // корень: левая ветвь, правая ветвь
-        if (x != NULL) {
-            Balance(x->right);
-            fixheight(x);
-            Balance(x->left);
-            fixheight(x);
-        }
-    }
-    
     void B(Node* x) {
-        if (x != NULL) {
+        if (x != nullptr) {
             B(x->right);
             if (root == x) {
                 x = balance(x);
@@ -368,46 +233,83 @@ public:
             B(x->left);
         }
     }
-    
-    void map(T func(T&), Node* x) {
-        if (x != NULL) {
-            func(x->key);
-            map(func, x->right);
-            map(func, x->left);
-        }
-    }
-    
-    void where(bool func(T&), Tree* nTree, Node* x) {
-        if (x != NULL) {
+
+    void where(bool (*func)(T&), Tree* nTree, Node* x) {
+        if (x != nullptr) {
             if (func(x->key)) {
                 nTree->insert(x->key);
             }
-            where(func, nTree, x->right);
             where(func, nTree, x->left);
+            where(func, nTree, x->right);
         }
     }
-    
+
     Tree<T>* budding(T val) {
-        Node*q = search(val);
+        Node* q = search(val);
         Tree<T>* tr = new Tree();
         tr->copy(q);
         return tr;
     }
-    
-    void copyStr(Node* x, std::vector<T> q) { // корень: левая ветвь, правая ветвь
-        if (x != NULL) {
-            q.push_back(x->key);
-            copyStr(x->right, q);
-            copyStr(x->left, q);
-        }
+
+    void copyStr(Node* x, std::vector<T>& q) {
+        copyStr(x, q);
     }
-    
-    std::vector<T> copyAsString() {
-        std::vector<T> q;
-        copyStr(root, q);
+
+private:
+    Node* balance(Node* q) {
+        fixheight(q);
+        if (bfactor(q) == 2) {
+            if (bfactor(q->right) < 0) {
+                q->right = rotableRight(q->right);
+            }
+            return rotableLeft(q);
+        }
+        if (bfactor(q) == -2) {
+            if (bfactor(q->left) > 0) {
+                q->left = rotableLeft(q->left);
+            }
+            return rotableRight(q);
+        }
         return q;
     }
-    // прошивка
+
+    unsigned char height(Node* p) {
+        return (p != nullptr) ? p->height : 0;
+    }
+
+    void fixheight(Node* p) {
+        int hl = height(p->left);
+        int hr = height(p->right);
+        p->height = (hl > hr ? hl : hr) + 1;
+    }
+
+    int bfactor(Node* p) {
+        return height(p->right) - height(p->left);
+    }
+
+    Node* rotableLeft(Node* q) {
+        Node* p = q->right;
+        if (p != nullptr) {
+            q->right = p->left;
+            p->left = q;
+            fixheight(q);
+            fixheight(p);
+            return p;
+        }
+        return q;
+    }
+
+    Node* rotableRight(Node* p) {
+        Node* q = p->left;
+        if (q != nullptr) {
+            p->left = q->right;
+            q->right = p;
+            fixheight(p);
+            fixheight(q);
+            return q;
+        }
+        return p;
+    }
 };
 
 #endif /* Graph_h */
