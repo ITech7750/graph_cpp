@@ -4,12 +4,6 @@
 #include "Dynamic Array.h"
 
 template<typename T>
-class TreePrinter {
-public:
-    virtual void printNode(const T& key) const = 0;
-};
-
-template<typename T>
 class SimpleTreePrinter : public TreePrinter<T> {
 public:
     void printNode(const T& key) const override {
@@ -58,6 +52,10 @@ private:
     }
 
 public:
+    class TreePrinter {
+    public:
+        virtual void printNode(const T& key) const = 0;
+    };
     Tree() : root(nullptr), last(nullptr) {}
     ~Tree() { clear(root); }
 
